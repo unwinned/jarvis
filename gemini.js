@@ -4,7 +4,7 @@ import { spawn } from 'child_process';
 
 const rawData = fs.readFileSync('config.json');
 const config = JSON.parse(rawData);
-const CURRENT_LANG = config.user.language || 'ru';
+const CURRENT_LANG = config.user.gemini.language || 'ru';
 
 const aiClient = new GoogleGenAI({ apiKey: config.user.apiKey });
 
@@ -19,7 +19,7 @@ async function generateText(userPrompt) {
                     parts: [{ text: `You're Jarvis, AI assistent from Iron-Man 
                     Your answers must be short, exact and without water (you can write 2 sentences max, 
                     unless user asks for detailed explanation).
-                    Answer the same language you were asked` }]
+                    Answer the same language you were asked`}]
                 }
             },
             contents: [{ parts: [{ text: userPrompt }] }]

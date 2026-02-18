@@ -1,0 +1,56 @@
+{
+    "calculator": "gnome-calculator",
+    "calc": "gnome-calculator",
+    "калькулятор": "gnome-calculator",
+
+    "notepad": "gedit",
+    "text editor": "gedit",
+    "блокнот": "gedit",
+    "текстовый редактор": "gedit",
+    "текстовий редактор": "gedit",
+
+    "browser": "google-chrome",
+    "chrome": "google-chrome",
+    "браузер": "google-chrome",
+    "хром": "google-chrome",
+
+    "code": "code",
+    "vscode": "code",
+    "код": "code",
+    "вискод": "code",
+    "віскод": "code",
+
+    "terminal": "gnome-terminal",
+    "console": "gnome-terminal",
+    "терминал": "gnome-terminal",
+    "консоль": "gnome-terminal",
+    "термінал": "gnome-terminal",
+
+    "telegram": "telegram-desktop",
+    "tg": "telegram-desktop",
+    "телеграм": "telegram-desktop",
+    "телега": "telegram-desktop",
+    "тг": "telegram-desktop",
+
+    "files": "nautilus",
+    "explorer": "nautilus",
+    "файлы": "nautilus",
+    "проводник": "nautilus",
+    "файли": "nautilus",
+    "провідник": "nautilus",
+
+    "discord": "discord",
+    "дискорд": "discord",
+    "діскорд": "discord",
+
+    "spotify": "spotify",
+    "music": "spotify",
+    "спотифай": "spotify",
+    "спотіфай": "spotify",
+    "музыка": "spotify",
+    "музика": "spotify",
+
+    "soundcloud": "/opt/google/chrome/google-chrome --profile-directory=Default --app-id=eikjhbkpemdappjfcmdeeeamdpkgabmk",
+    "саундклауд": "/opt/google/chrome/google-chrome --profile-directory=Default --app-id=eikjhbkpemdappjfcmdeeeamdpkgabmk",
+    "саунд клауд": "/opt/google/chrome/google-chrome --profile-directory=Default --app-id=eikjhbkpemdappjfcmdeeeamdpkgabmk"
+}
