@@ -20,6 +20,7 @@ UPDATE V3.5 IS COMING FOR:
 - giving you smoother and prettier UI
 - windows version
 - faster Jarvis' responses
+- updating Gemini as well as chatgpt was upgraded
 
 
 so, let's start from installation:
