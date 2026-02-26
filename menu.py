@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from tkinter import messagebox
 import json
@@ -8,13 +7,11 @@ import signal
 
 CONFIG_FILE = 'config.json'
 
-# BETA | IT MEANS THIS ISN'T FINISHED YET.
-
 class JarvisUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Jarvis Control Panel")
-        self.root.geometry("500x550")
+        self.root.geometry("500x570")
         self.root.configure(bg="#1e1e1e")
         self.root.resizable(False, False)
         
@@ -22,13 +19,17 @@ class JarvisUI:
         
         self.config = {
             "user": {
-                "language": "en",
-                "gemini": {"apiKey": ""},
-                "chatgpt": {"apiKey": ""}
-            }
+                "language": "ru",
+                "ai": "chatgpt"
+            },
+            "gemini": {"apiKey": ""},
+            "chatgpt": {"apiKey": ""}
         }
+        
+        self.model_var = tk.StringVar(value="chatgpt")
+        self.lang_var = tk.StringVar(value="ru")
+        
         self.load_config()
-
         self.setup_ui()
 
     def setup_ui(self):
@@ -40,29 +41,26 @@ class JarvisUI:
 
         tk.Label(main_frame, text="ChatGPT API Key", bg="#1e1e1e", fg="#aaaaaa", font=("Segoe UI", 10)).pack(anchor=tk.W)
         self.chatgpt_entry = tk.Entry(main_frame, width=55, bg="#2d2d2d", fg="#ffffff", insertbackground="white", relief=tk.FLAT, font=("Consolas", 10))
-        self.chatgpt_entry.insert(0, self.config["user"].get("chatgpt", {}).get("apiKey", ""))
+        self.chatgpt_entry.insert(0, self.config.get("chatgpt", {}).get("apiKey", ""))
         self.chatgpt_entry.pack(fill=tk.X, pady=(5, 15), ipady=6)
 
         tk.Label(main_frame, text="Gemini API Key", bg="#1e1e1e", fg="#aaaaaa", font=("Segoe UI", 10)).pack(anchor=tk.W)
         self.gemini_entry = tk.Entry(main_frame, width=55, bg="#2d2d2d", fg="#ffffff", insertbackground="white", relief=tk.FLAT, font=("Consolas", 10))
-        self.gemini_entry.insert(0, self.config["user"].get("gemini", {}).get("apiKey", ""))
+        self.gemini_entry.insert(0, self.config.get("gemini", {}).get("apiKey", ""))
         self.gemini_entry.pack(fill=tk.X, pady=(5, 15), ipady=6)
 
         tk.Label(main_frame, text="System Language", bg="#1e1e1e", fg="#aaaaaa", font=("Segoe UI", 10)).pack(anchor=tk.W)
-        self.lang_var = tk.StringVar(value=self.config["user"].get("language", "en"))
         lang_menu = tk.OptionMenu(main_frame, self.lang_var, "en", "ru", "uk")
         lang_menu.config(bg="#2d2d2d", fg="#ffffff", activebackground="#3d3d3d", relief=tk.FLAT, highlightthickness=0)
         lang_menu.pack(fill=tk.X, pady=(5, 15), ipady=3)
 
-        tk.Label(main_frame, text="Select AI Model", bg="#1e1e1e", fg="#aaaaaa", font=("Segoe UI", 10)).pack(anchor=tk.W)
-        self.model_var = tk.StringVar(value="chatgpt")
-        
+        tk.Label(main_frame, text="Select Active AI", bg="#1e1e1e", fg="#aaaaaa", font=("Segoe UI", 10)).pack(anchor=tk.W)
         radio_frame = tk.Frame(main_frame, bg="#1e1e1e")
         radio_frame.pack(fill=tk.X, pady=(5, 20))
         
         rb_style = {"bg": "#1e1e1e", "fg": "#ffffff", "activebackground": "#1e1e1e", "activeforeground": "#0e639c", "selectcolor": "#2d2d2d", "font": ("Segoe UI", 10)}
-        tk.Radiobutton(radio_frame, text="ChatGPT (chatgpt.js)", variable=self.model_var, value="chatgpt", **rb_style).pack(side=tk.LEFT, padx=(0, 20))
-        tk.Radiobutton(radio_frame, text="Gemini (gemini.js)", variable=self.model_var, value="gemini", **rb_style).pack(side=tk.LEFT)
+        tk.Radiobutton(radio_frame, text="ChatGPT", variable=self.model_var, value="chatgpt", **rb_style).pack(side=tk.LEFT, padx=(0, 20))
+        tk.Radiobutton(radio_frame, text="Gemini", variable=self.model_var, value="gemini", **rb_style).pack(side=tk.LEFT)
 
         btn_frame = tk.Frame(main_frame, bg="#1e1e1e")
         btn_frame.pack(fill=tk.X, pady=(10, 0))
@@ -70,7 +68,7 @@ class JarvisUI:
         self.save_btn = tk.Button(btn_frame, text="Save Settings", command=self.save_config, bg="#0e639c", fg="#ffffff", relief=tk.FLAT, font=("Segoe UI", 10, "bold"), cursor="hand2")
         self.save_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5), ipady=8)
 
-        self.start_btn = tk.Button(btn_frame, text="Start", command=self.start_jarvis, bg="#238636", fg="#ffffff", relief=tk.FLAT, font=("Segoe UI", 10, "bold"), cursor="hand2")
+        self.start_btn = tk.Button(btn_frame, text="Start Jarvis", command=self.start_jarvis, bg="#238636", fg="#ffffff", relief=tk.FLAT, font=("Segoe UI", 10, "bold"), cursor="hand2")
         self.start_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5, ipady=8)
 
         self.stop_btn = tk.Button(btn_frame, text="Stop", command=self.stop_jarvis, bg="#da3633", fg="#ffffff", relief=tk.FLAT, font=("Segoe UI", 10, "bold"), state=tk.DISABLED, cursor="hand2")
@@ -84,44 +82,47 @@ class JarvisUI:
     def load_config(self):
         if os.path.exists(CONFIG_FILE):
             try:
-                with open(CONFIG_FILE, 'r') as f:
-                    file_data = json.load(f)
-                    if "user" in file_data:
-                        self.config["user"].update(file_data["user"])
-            except:
-                pass
+                with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.config.update(data)
+                    
+                    self.lang_var.set(self.config["user"].get("language", "ru"))
+                    self.model_var.set(self.config["user"].get("ai", "chatgpt"))
+            except Exception as e:
+                print(f"Error loading config: {e}")
 
     def save_config(self):
-        self.config["user"]["chatgpt"]["apiKey"] = self.chatgpt_entry.get().strip()
-        self.config["user"]["gemini"]["apiKey"] = self.gemini_entry.get().strip()
         self.config["user"]["language"] = self.lang_var.get()
+        self.config["user"]["ai"] = self.model_var.get()
+        self.config["chatgpt"]["apiKey"] = self.chatgpt_entry.get().strip()
+        self.config["gemini"]["apiKey"] = self.gemini_entry.get().strip()
         
         try:
-            with open(CONFIG_FILE, 'w') as f:
-                json.dump(self.config, f, indent=4)
-            messagebox.showinfo("Success", "Settings saved to config.json")
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=4, ensure_ascii=False)
+            messagebox.showinfo("Success", "Configuration saved!")
         except Exception as e:
-            messagebox.showerror("Error", f"Save failed: {e}")
+            messagebox.showerror("Error", f"Failed to save: {e}")
 
     def start_jarvis(self):
         if self.process is None:
-            selected_model = self.model_var.get()
-            script_name = "chatgpt.js" if selected_model == "chatgpt" else "gemini.js"
+            selected_ai = self.model_var.get()
+            script_to_run = f"{selected_ai}.js"
             
-            if not os.path.exists(script_name):
-                messagebox.showerror("Error", f"File {script_name} not found!")
+            if not os.path.exists(script_to_run):
+                messagebox.showerror("Error", f"File {script_to_run} not found!")
                 return
 
             try:
                 self.process = subprocess.Popen(
-                    ['node', script_name], 
+                    ['node', script_to_run], 
                     preexec_fn=os.setsid
                 )
-                self.status_label.config(text=f"STATUS: ONLINE ({script_name})", fg="#238636")
+                self.status_label.config(text=f"STATUS: ONLINE ({selected_ai})", fg="#238636")
                 self.start_btn.config(state=tk.DISABLED)
                 self.stop_btn.config(state=tk.NORMAL)
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to start: {e}")
+                messagebox.showerror("Error", f"Execution failed: {e}")
 
     def stop_jarvis(self):
         if self.process is not None:
