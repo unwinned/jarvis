@@ -3,14 +3,12 @@ welcome, and thank you for downloading!
 unfortunately, Jarvis works only on Ubuntu (Linux) now I'll try to adapt it for Windows in v3.5 as well
 
 
-V3 IMPROVEMENTS:
-- added context for apps. Jarvis can launch several apps, and do several actions in general now
-- undertanding you better. example: if you ask Jarvis to work - he'll open apps for your work (I've added options to work: AI, coding, twitter. it's for me, but you can easily modify it, or just unable it using comments. whatever)
-- launching websites and search for something there. Try: "Hey, Jarvis, open MrBeast Youtube channel"
+V3.2 IMPROVEMENTS:
+- added opportunity to shut Jarvis down. just say it: "Jarvis, goodbye"
 
 
 Jarvis' functions:
-
+- Jarvis' poweroff
 - open any desktop application on your pc. he can close it all as well.
 - find any search request in Google within your default browser 
 - you can feel free to talk with Jarvis about whatever you want (don't ask him about actual data, because it updates less on API requests) just set your api keys right in launcher (I'll remake fields for that smaller, for smoother UI in v3.5)

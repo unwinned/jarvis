@@ -3,12 +3,10 @@
         "language": "ru",
         "ai": "chatgpt"
     },
-
     "gemini": {
-            "apiKey": ""
-        },
-        
+        "apiKey": ""
+    },
     "chatgpt": {
-            "apiKey": ""
-        }
+        "apiKey": ""
     }
+}

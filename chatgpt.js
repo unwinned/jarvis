@@ -16,7 +16,7 @@ const openai = new OpenAI({
 });
 
 const tools = [
-    {
+        {
         type: "function",
         function: {
             name: "open_app",
@@ -27,6 +27,20 @@ const tools = [
                     app_name: { type: "string", description: "The exact name of the app selected from the available system apps list." }
                 },
                 required: ["app_name"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "poweroff",
+            description: "Shuts Jarvis down",
+            parameters: {
+                type: "object",
+                properties: {
+                    title: { type: "string", description: "Turns Jarvis off" }
+                },
+                required: ["title"]
             }
         }
     },
@@ -149,8 +163,6 @@ async function setupWorkspace(category) {
         exec(`xdg-open "https://gemini.google.com"`);
         executedActions.push("AI platforms");
     }
-
-    return `Configured workspace for ${category}: opened ${executedActions.join(', ')}.`;
 }
 
 
@@ -160,7 +172,6 @@ async function openApp(appName) {
     exec(`nohup ${command} > /dev/null 2>&1 &`, (error) => {
         if (error) console.error(`Failed to launch ${command}:`, error.message);
     });
-    return `Opened application: ${appName}`;
 }
 
 async function closeApp(appName) {
@@ -168,7 +179,6 @@ async function closeApp(appName) {
     exec(`pkill -i -f "${appName}"`, (error) => {
         if (error) console.error(`Failed to terminate ${appName}:`, error.message);
     });
-    return `Terminated application: ${appName}`;
 }
 
 async function closeWindow(title) {
@@ -176,13 +186,18 @@ async function closeWindow(title) {
     exec(`xdotool search --name "${title}" windowclose`, (error) => {
         if (error) console.error(`Failed to close window with title ${title}:`, error.message);
     });
-    return `Closed window matching: ${title}`;
+}
+
+async function poweroff() {
+    console.log(`Executing Jarvis' shutdown`);
+    exec('pkill -f speech.py')
+    exec('killall node')
+    
 }
 
 async function openUrl(url) {
     console.log(`Executing URL execution: ${url}`);
     exec(`xdg-open "${url}"`);
-    return `Opened website: ${url}`;
 }
 
 async function searchWebsite(website, query) {
@@ -198,7 +213,6 @@ async function searchWebsite(website, query) {
     const targetUrl = baseUrl ? `${baseUrl}${encodeURIComponent(query)}` : `https://www.google.com/search?q=${encodeURIComponent(website + ' ' + query)}`;
     
     exec(`xdg-open "${targetUrl}"`);
-    return `Searched ${website} for ${query}`;
 }
 
 async function generateText(userPrompt) {    
@@ -217,6 +231,7 @@ async function generateText(userPrompt) {
                     If user asks to close a specific tab or window, use close_window.
                     If user asks to search on a specific website, use search_website.
                     If user asks to open a website, use open_url.
+                    If user says 'goodbye', 'shutdown', 'turn off', or 'poweroff', use poweroff tool to close the execution.
                     Otherwise, answer briefly (max 2 sentences).
                     Language: ${CURRENT_LANG}` 
                 },
@@ -256,6 +271,9 @@ async function generateText(userPrompt) {
                 }
                 else if (toolCall.function.name === "setup_workspace") {
                     resultText = await setupWorkspace(args.category);
+                }
+                else if (toolCall.function.name === "poweroff") {
+                    resultText = await poweroff();
                 }
                 
                 executionResults.push(resultText);
@@ -336,11 +354,15 @@ function startListening() {
             }
 
             const lowerText = text.toLowerCase();
-            if (lowerText.includes("джарвис") || lowerText.includes("jarvis") || lowerText.includes("привет") || lowerText.includes("привіт")) {
+            if (lowerText.includes("джарвис") || lowerText.includes("jarvis") || lowerText.includes("привет") || lowerText.includes("привіт") || lowerText.includes("джарвіс")) {
                 const aiResponse = await generateText(text);
                 if (aiResponse) await speak(aiResponse);
             }
         }
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+    console.error(`PYTHON ERROR: ${data.toString()}`);
     });
     
     pythonProcess.on('close', (code) => {
