@@ -10,7 +10,7 @@ V3.3 IMPROVEMENTS:
 - removed Gemini. I've removed it because of its unstability, and because it creates a lot of sync problems. so it's better to stay with ChatGPT only now
 
 V3.4 IMPROVEMENTS:
-- setting everything up for Windows
+- setting everything up for Windows, and updating UI, it's a way better now
 
 
 Jarvis' functions:
@@ -21,10 +21,8 @@ Jarvis' functions:
 
 
 UPDATE V3.5 IS COMING FOR:
-- giving you smoother and prettier UI
 - windows version
 - faster Jarvis' responses
-- updating Gemini as well as chatgpt was upgraded
 
 
 so, let's start from installation:
