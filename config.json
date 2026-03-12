@@ -1,10 +1,7 @@
 {
     "user": {
-        "language": "ru",
-        "ai": "chatgpt"
-    },
-    "gemini": {
-        "apiKey": ""
+        "language": "ua",
+        "ai": "сhatgpt"
     },
     "chatgpt": {
         "apiKey": ""

@@ -6,6 +6,12 @@ unfortunately, Jarvis works only on Ubuntu (Linux) now I'll try to adapt it for 
 V3.2 IMPROVEMENTS:
 - added opportunity to shut Jarvis down. just say it: "Jarvis, goodbye"
 
+V3.3 IMPROVEMENTS:
+- removed Gemini. I've removed it because of its unstability, and because it creates a lot of sync problems. so it's better to stay with ChatGPT only now
+
+V3.4 IMPROVEMENTS:
+- setting everything up for Windows
+
 
 Jarvis' functions:
 - Jarvis' poweroff

@@ -16,7 +16,7 @@ const openai = new OpenAI({
 });
 
 const tools = [
-        {
+    {
         type: "function",
         function: {
             name: "open_app",
@@ -55,20 +55,6 @@ const tools = [
                     app_name: { type: "string", description: "The process name of the application to terminate (e.g., chrome, code, discord)" }
                 },
                 required: ["app_name"]
-            }
-        }
-    },
-    {
-        type: "function",
-        function: {
-            name: "close_window",
-            description: "Closes a specific window or active browser tab by matching its title.",
-            parameters: {
-                type: "object",
-                properties: {
-                    title: { type: "string", description: "Keyword in the window or tab title (e.g., Twitter, YouTube)" }
-                },
-                required: ["title"]
             }
         }
     },
@@ -140,64 +126,51 @@ let isSpeaking = false;
 async function googleSearch(query) {
     console.log(`Executing search: ${query}`);
     const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-    exec(`xdg-open "${url}"`);
+    exec(`start "" "${url}"`);
     return `Searching for: ${query}`;
 }
 
 async function setupWorkspace(category) {
     console.log(`Executing workspace setup for category: ${category}`);
-    let executedActions = [];
-
     if (category === "coding") {
-        // Replace 'code' with your specific IDE command if different
-        exec(`nohup code > /dev/null 2>&1 &`); 
-        exec(`xdg-open "https://github.com"`);
-        executedActions.push("IDE and GitHub");
+        exec(`start code`); 
+        exec(`start "" "https://github.com"`);
     } 
     else if (category === "twitter") {
-        exec(`xdg-open "https://x.com"`);
-        executedActions.push("Twitter");
+        exec(`start "" "https://x.com"`);
     } 
     else if (category === "ai") {
-        exec(`xdg-open "https://chatgpt.com"`);
-        exec(`xdg-open "https://gemini.google.com"`);
-        executedActions.push("AI platforms");
+        exec(`start "" "https://chatgpt.com"`);
+        exec(`start "" "https://gemini.google.com"`);
     }
 }
-
 
 async function openApp(appName) {
     console.log(`Executing application launch: ${appName}`);
     let command = appMap[appName.toLowerCase()] || appName;
-    exec(`nohup ${command} > /dev/null 2>&1 &`, (error) => {
+    exec(`start "" "${command}"`, (error) => {
         if (error) console.error(`Failed to launch ${command}:`, error.message);
     });
 }
 
 async function closeApp(appName) {
     console.log(`Executing termination for application: ${appName}`);
-    exec(`pkill -i -f "${appName}"`, (error) => {
-        if (error) console.error(`Failed to terminate ${appName}:`, error.message);
-    });
-}
-
-async function closeWindow(title) {
-    console.log(`Executing window closure for title: ${title}`);
-    exec(`xdotool search --name "${title}" windowclose`, (error) => {
-        if (error) console.error(`Failed to close window with title ${title}:`, error.message);
+    exec(`taskkill /F /IM "${appName}.exe" /T`, (error) => {
+        if (error) {
+            exec(`taskkill /F /FI "WINDOWTITLE eq ${appName}*" /T`);
+        }
     });
 }
 
 async function poweroff() {
     console.log(`Executing Jarvis' shutdown`);
-    exec('pkill -f speech.py')
-    exec('killall node')
-    
+    exec('taskkill /F /IM node.exe /T');
+    process.exit();
 }
 
 async function openUrl(url) {
     console.log(`Executing URL execution: ${url}`);
-    exec(`xdg-open "${url}"`);
+    exec(`start "" "${url}"`);
 }
 
 async function searchWebsite(website, query) {
@@ -208,11 +181,9 @@ async function searchWebsite(website, query) {
         "github": `https://github.com/search?q=`,
         "wikipedia": `https://ru.wikipedia.org/wiki/Special:Search?search=`
     };
-
     const baseUrl = siteUrls[website.toLowerCase()];
     const targetUrl = baseUrl ? `${baseUrl}${encodeURIComponent(query)}` : `https://www.google.com/search?q=${encodeURIComponent(website + ' ' + query)}`;
-    
-    exec(`xdg-open "${targetUrl}"`);
+    exec(`start "" "${targetUrl}"`);
 }
 
 async function generateText(userPrompt) {    
@@ -221,18 +192,8 @@ async function generateText(userPrompt) {
             messages: [
                 { 
                     role: "system", 
-                    content: `You are Jarvis. You control the Linux PC.
+                    content: `You are Jarvis. You control the Windows PC.
                     Available system apps: ${availableApps}.
-                    You can execute multiple actions simultaneously.
-                    If user says it is time to work, ask them to clarify if they mean 'coding', 'twitter', or 'ai'. Do not use tools until they specify.
-                    If user specifies they want to work on 'coding', 'twitter', or 'ai', use the setup_workspace tool.
-                    If user asks to open an app, use open_app.
-                    If user asks to close an app entirely, use close_app.
-                    If user asks to close a specific tab or window, use close_window.
-                    If user asks to search on a specific website, use search_website.
-                    If user asks to open a website, use open_url.
-                    If user says 'goodbye', 'shutdown', 'turn off', or 'poweroff', use poweroff tool to close the execution.
-                    Otherwise, answer briefly (max 2 sentences).
                     Language: ${CURRENT_LANG}` 
                 },
                 { role: "user", content: userPrompt }
@@ -245,50 +206,20 @@ async function generateText(userPrompt) {
         const message = completion.choices[0].message;
 
         if (message.tool_calls) {
-            let executionResults = [];
-            
             for (const toolCall of message.tool_calls) {
                 const args = JSON.parse(toolCall.function.arguments);
-                let resultText = "";
-
-                if (toolCall.function.name === "open_app") {
-                    resultText = await openApp(args.app_name);
-                } 
-                else if (toolCall.function.name === "close_app") {
-                    resultText = await closeApp(args.app_name);
-                }
-                else if (toolCall.function.name === "close_window") {
-                    resultText = await closeWindow(args.title);
-                }
-                else if (toolCall.function.name === "google_search") {
-                    resultText = await googleSearch(args.query);
-                }
-                else if (toolCall.function.name === "open_url") {
-                    resultText = await openUrl(args.url);
-                }
-                else if (toolCall.function.name === "search_website") {
-                    resultText = await searchWebsite(args.website, args.query);
-                }
-                else if (toolCall.function.name === "setup_workspace") {
-                    resultText = await setupWorkspace(args.category);
-                }
-                else if (toolCall.function.name === "poweroff") {
-                    resultText = await poweroff();
-                }
-                
-                executionResults.push(resultText);
+                if (toolCall.function.name === "open_app") await openApp(args.app_name);
+                else if (toolCall.function.name === "close_app") await closeApp(args.app_name);
+                else if (toolCall.function.name === "google_search") await googleSearch(args.query);
+                else if (toolCall.function.name === "open_url") await openUrl(args.url);
+                else if (toolCall.function.name === "search_website") await searchWebsite(args.website, args.query);
+                else if (toolCall.function.name === "setup_workspace") await setupWorkspace(args.category);
+                else if (toolCall.function.name === "poweroff") await poweroff();
             }
-
-            const finalOutput = executionResults.join(' | ');
-            console.log(`Tools executed: ${finalOutput}`);
-            return finalOutput;
+            return "Executing commands...";
         }
-
-        console.log(`Model response: ${message.content}`);
         return message.content;
-
     } catch (error) {
-        console.error("API Connection Error:", error.message);
         return "Connection error.";
     }
 }
@@ -296,77 +227,56 @@ async function generateText(userPrompt) {
 async function speak(textToSay) {
     if (!textToSay) return;
     isSpeaking = true;
-    
     try {
         const mp3 = await openai.audio.speech.create({
-            model: "tts-1",          
-            voice: "onyx",       
-            input: textToSay,
-            speed: 1.2,
+            model: "tts-1", voice: "onyx", input: textToSay, speed: 1.2,
         });
-
         const buffer = Buffer.from(await mp3.arrayBuffer());
-        const player = spawn('mpg123', ['-f', '80000', '-q', '-']); 
-        player.stdin.write(buffer);
-        player.stdin.end();
+        const tempFile = path.join(process.cwd(), 'temp_speech.mp3');
+        fs.writeFileSync(tempFile, buffer);
+
+        const player = spawn('powershell', [
+            '-c', `Add-Type -AssemblyName PresentationCore; $wmplayer = New-Object System.Windows.Media.MediaPlayer; $wmplayer.Open('${tempFile}'); $wmplayer.Play(); Start-Sleep -s 100; while($wmplayer.Position -lt $wmplayer.NaturalDuration){Start-Sleep -m 100}`
+        ]);
 
         return new Promise((resolve) => {
             player.on('close', () => {
+                if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
                 isSpeaking = false;
                 resolve();
             });
         });
     } catch (error) {
-        console.error("TTS Engine Error:", error.message);
         isSpeaking = false;
     }
 }
 
 function startListening() {
-    console.log(`System init. Language: ${CURRENT_LANG}. Awaiting input...`);
+    console.log(`System init. Windows Mode. Language: ${CURRENT_LANG}.`);
     
-    const pythonExec = path.join(process.cwd(), 'venv', 'bin', 'python3');
+    const pythonExec = path.join(process.cwd(), 'venv', 'Scripts', 'python.exe');
     const speechScript = path.join(process.cwd(), 'speech.py');
 
     const pythonProcess = spawn(pythonExec, [speechScript, CURRENT_LANG]);
 
     pythonProcess.stdout.on('data', async (data) => {
         if (isSpeaking) return;
-
         const lines = data.toString().split('\n');
-
         for (const line of lines) {
-            const rawText = line.trim();
-            if (!rawText) continue;
+            const text = line.trim();
+            if (!text || text === "READY") continue;
+            
+            const cleanText = text.includes(':') ? text.split(':').slice(1).join(':').trim() : text;
+            const lowerText = cleanText.toLowerCase();
 
-            if (rawText === "READY") {
-                console.log("Audio stream active. Listening...");
-                continue;
-            }
-
-            let text = rawText;
-            if (rawText.includes(':')) {
-                text = rawText.split(':').slice(1).join(':').trim(); 
-            }
-
-            if (text.length > 0) {
-                console.log(`Input received: "${text}"`);
-            }
-
-            const lowerText = text.toLowerCase();
-            if (lowerText.includes("джарвис") || lowerText.includes("jarvis") || lowerText.includes("привет") || lowerText.includes("привіт") || lowerText.includes("джарвіс")) {
-                const aiResponse = await generateText(text);
+            if (["джарвис", "jarvis", "привет", "привіт", "джарвіс"].some(key => lowerText.includes(key))) {
+                const aiResponse = await generateText(cleanText);
                 if (aiResponse) await speak(aiResponse);
             }
         }
     });
 
-    // pythonProcess.stderr.on('data', (data) => {
-    // console.error(`PYTHON ERROR: ${data.toString()}`);
-    // });
-    
-    pythonProcess.on('close', (code) => {
-        console.log(`Speech process terminated. Code: ${code}. Restarting sequence initiated.`);
+    pythonProcess.on('close', () => {
         setTimeout(startListening, 2000);
     });
 }

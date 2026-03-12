@@ -3,7 +3,6 @@ from tkinter import messagebox
 import json
 import subprocess
 import os
-import signal
 import psutil
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,20 +11,19 @@ CONFIG_FILE = os.path.join(BASE_DIR, 'config.json')
 class JarvisUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Jarvis Control Panel")
+        self.root.title("Jarvis Control Panel (Windows)")
         self.root.geometry("500x700")
         self.root.configure(bg="#1e1e1e")
         self.root.resizable(False, False)
         
         self.process = None
         self.config = {
-            "user": {"language": "ru", "ai": "chatgpt", "os": "linux"},
+            "user": {"language": "ru", "ai": "chatgpt"},
             "chatgpt": {"apiKey": ""}
         }
         
         self.model_var = tk.StringVar(value="chatgpt")
         self.lang_var = tk.StringVar(value="ru")
-        self.os_var = tk.StringVar(value="linux")
         
         self.container = tk.Frame(self.root, bg="#1e1e1e")
         self.container.pack(fill="both", expand=True)
@@ -55,19 +53,17 @@ class JarvisUI:
                     self.config.update(data)
                     self.lang_var.set(self.config["user"].get("language", "ru"))
                     self.model_var.set(self.config["user"].get("ai", "chatgpt"))
-                    self.os_var.set(self.config["user"].get("os", "linux"))
                     
                     settings = self.frames["SettingsPage"]
                     settings.chatgpt_entry.delete(0, tk.END)
                     settings.chatgpt_entry.insert(0, self.config.get("chatgpt", {}).get("apiKey", ""))
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"Error loading config: {e}")
 
     def save_config(self):
         settings = self.frames["SettingsPage"]
         self.config["user"]["language"] = self.lang_var.get()
         self.config["user"]["ai"] = self.model_var.get()
-        self.config["user"]["os"] = self.os_var.get()
         self.config["chatgpt"]["apiKey"] = settings.chatgpt_entry.get().strip()
         
         try:
@@ -78,44 +74,42 @@ class JarvisUI:
             messagebox.showerror("Error", f"Failed to save: {e}")
 
     def start_jarvis(self):
-            if self.process is None:
-                target_path = os.path.join(BASE_DIR, "chatgpt.js")
+        if self.process is None:
+            selected_ai = self.model_var.get().lower()
+            target_path = os.path.join(BASE_DIR, f"{selected_ai}.js")
+            
+            if not os.path.exists(target_path):
+                target_path = os.path.join(BASE_DIR, f"{selected_ai}.js")
 
-                try:
-                    os.chmod(target_path, 0o755)
-                except:
-                    pass
+            print(f"DEBUG: Launching {target_path}")
 
-                # print(f"DEBUG Check: Path exists? {os.path.exists(target_path)}")
+            if not os.path.exists(target_path):
+                messagebox.showerror("Error", f"Файл {selected_ai}.js не найден!\nПроверьте: {target_path}")
+                return
 
-                if not os.path.exists(target_path):
-                    print(f"FILES IN DIR: {os.listdir(BASE_DIR)}")
-                    messagebox.showerror("Error", f"Python в упор не видит файл по пути:\n{target_path}")
-                    return
+            try:
+                self.process = subprocess.Popen(
+                    ['node', target_path], 
+                    cwd=BASE_DIR,
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
+                )
 
-                try:
-                    self.process = subprocess.Popen(
-                        f'node "{target_path}"', 
-                        shell=True,
-                        cwd=BASE_DIR, 
-                        preexec_fn=os.setsid if os.name != 'nt' else None
-                    )
-
-                    self.frames["MainPage"].status_label.config(text="STATUS: ONLINE", fg="#238636")
-                    self.frames["MainPage"].start_btn.config(state=tk.DISABLED)
-                    self.frames["MainPage"].stop_btn.config(state=tk.NORMAL)
-                except Exception as e:
-                    messagebox.showerror("Error", f"Execution failed: {e}")
+                self.frames["MainPage"].status_label.config(text=f"STATUS: ONLINE ({selected_ai})", fg="#238636")
+                self.frames["MainPage"].start_btn.config(state=tk.DISABLED)
+                self.frames["MainPage"].stop_btn.config(state=tk.NORMAL)
+            except Exception as e:
+                messagebox.showerror("Error", f"Execution failed: {e}")
 
     def scan_apps(self):
-        is_win = self.os_var.get() == "windows"
-        path = os.path.join("windows", "apps_scanner.js") if is_win else "apps_scanner.js"
+        scan_path = os.path.join(BASE_DIR, "windows", "apps_scanner.js")
+        if not os.path.exists(scan_path):
+            scan_path = os.path.join(BASE_DIR, "apps_scanner.js")
         
-        if not os.path.exists(path):
-            messagebox.showerror("Error", f"File {path} not found!")
+        if not os.path.exists(scan_path):
+            messagebox.showerror("Error", f"Scanner not found at {scan_path}")
             return
         try:
-            subprocess.Popen(['node', path])
+            subprocess.Popen(['node', scan_path], cwd=BASE_DIR)
             messagebox.showinfo("Scanner", "Apps scanner started!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to start scanner: {e}")
@@ -123,20 +117,18 @@ class JarvisUI:
     def stop_jarvis(self):
         if self.process is not None:
             try:
-                parent = psutil.Process(self.process.pid)
-                for child in parent.children(recursive=True):
-                    child.kill()
-                parent.kill()
+                subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.process.pid)], capture_output=True)
             except:
                 pass
 
-        for proc in psutil.process_iter(['name']):
+        for proc in psutil.process_iter(['name', 'cmdline']):
             try:
-                name = proc.info['name'].lower()
-                if 'node' in name or 'python' in name:
-                    cmdline = proc.cmdline()
-                    cmd_str = " ".join(cmdline).lower()
-                    if 'speech.py' in cmd_str or any(s in cmd_str for s in ['chatgpt.js', 'main.js', 'apps_scanner.js']):
+                cmd = proc.info.get('cmdline')
+                if cmd:
+                    cmd_str = " ".join(cmd).lower()
+                    if 'node' in proc.info['name'].lower() and any(x in cmd_str for x in ['chatgpt.js', 'gemini.js', 'main.js']):
+                        proc.kill()
+                    if 'python' in proc.info['name'].lower() and 'speech.py' in cmd_str:
                         proc.kill()
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
@@ -191,14 +183,13 @@ class SettingsPage(tk.Frame):
         self.chatgpt_entry.pack(fill=tk.X, pady=(2, 10), ipady=6)
 
         tk.Label(content, text="Language", bg="#1e1e1e", fg="#aaaaaa", font=("Segoe UI", 9)).pack()
-        lang_menu = tk.OptionMenu(content, controller.lang_var, "en", "ru", "ua")
+        lang_menu = tk.OptionMenu(content, controller.lang_var, "en", "ru", "uk")
         lang_menu.config(bg="#2d2d2d", fg="#ffffff", relief=tk.FLAT, highlightthickness=0, font=("Segoe UI", 9))
         lang_menu.pack(fill=tk.X, pady=(2, 10))
 
         tk.Label(content, text="System Type", bg="#1e1e1e", fg="#aaaaaa", font=("Segoe UI", 9)).pack()
         os_frame = tk.Frame(content, bg="#1e1e1e")
         os_frame.pack(pady=5)
-        tk.Radiobutton(os_frame, text="Linux", variable=controller.os_var, value="linux", bg="#1e1e1e", fg="#ffffff", selectcolor="#2d2d2d").pack(side=tk.LEFT, padx=10)
         tk.Radiobutton(os_frame, text="Windows", variable=controller.os_var, value="windows", bg="#1e1e1e", fg="#ffffff", selectcolor="#2d2d2d").pack(side=tk.LEFT, padx=10)
 
         tk.Button(content, text="Save & Back", command=lambda: [controller.save_config(), controller.show_frame("MainPage")], bg="#0e639c", fg="#ffffff", relief=tk.FLAT, font=("Segoe UI", 12, "bold")).pack(fill=tk.X, pady=(15, 0), ipady=10)
