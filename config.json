@@ -1,7 +1,8 @@
 {
     "user": {
         "language": "ua",
-        "ai": "сhatgpt"
+        "ai": "сhatgpt",
+        "os": "linux"
     },
     "chatgpt": {
         "apiKey": ""

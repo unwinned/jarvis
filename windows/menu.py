@@ -81,10 +81,10 @@ class JarvisUI:
             if not os.path.exists(target_path):
                 target_path = os.path.join(BASE_DIR, f"{selected_ai}.js")
 
-            print(f"DEBUG: Launching {target_path}")
+            # print(f"DEBUG: Launching {target_path}")
 
             if not os.path.exists(target_path):
-                messagebox.showerror("Error", f"Файл {selected_ai}.js не найден!\nПроверьте: {target_path}")
+                messagebox.showerror("Error", f"file {selected_ai}.js не найден!\check: {target_path}")
                 return
 
             try:
