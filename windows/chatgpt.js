@@ -28,15 +28,14 @@ async function speak(textToSay) {
         const tempFile = path.resolve(__dirname, 'temp_speech.mp3');
         fs.writeFileSync(tempFile, buffer);
 
-        console.log(`playing...`);
+        console.log(`tts...`);
         
-        // Воспроизведение без окон и костылей
         await sound.play(tempFile);
         
         if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
         isSpeaking = false;
     } catch (e) {
-        console.error("tts err:", e.message);
+        console.error("tts error:", e.message);
         isSpeaking = false;
     }
 }
@@ -64,7 +63,7 @@ function startListening() {
 
             if (finalSpeech.length < 2) return;
 
-            console.log(`you: ${finalSpeech}`);
+            console.log(`[you]: ${finalSpeech}`);
 
             const wakeWords = ["джарвис", "jarvis", "привет", "привіт", "джарвіс"];
             if (wakeWords.some(w => finalSpeech.toLowerCase().includes(w))) {
@@ -78,10 +77,10 @@ function startListening() {
                     });
                     
                     const reply = completion.choices[0].message.content;
-                    console.log(`jarvis: ${reply}`);
+                    console.log(`[jarvis]: ${reply}`);
                     await speak(reply);
                 } catch (err) {
-                    console.error("err:", err.message);
+                    console.error("gpt error:", err.message);
                 }
             }
         }, 1200);
@@ -90,5 +89,5 @@ function startListening() {
     pythonProcess.on('close', () => setTimeout(startListening, 2000));
 }
 
-console.log("launching");
+console.log("launching...");
 startListening();
