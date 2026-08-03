@@ -1,31 +1,76 @@
-welcome, and thank you for downloading!
+📖 About
 
-unfortunately, Jarvis works only on Ubuntu (Linux) now I'll try to adapt it for Windows in v3.5 as well
+Jarvis is a personal desktop AI assistant with a graphical UI, voice recognition, and control over your system: launch and close apps, run Google searches, and have open-ended conversations powered by ChatGPT / Gemini.
 
-V3.4 IMPROVEMENTS:
-- setting everything up for Windows, and updating UI, it's a way better now
+Currently runs on Ubuntu (Linux); Windows support is being worked on.
 
-V3.5 IMROVEMENTS:
-- ability to work with Jarvis on Windows (launch chatgpt.js directly, because menu.py doesn't want to work somewhy, I hate windows btw)
-- faster responses
+✨ Features
+🔌 Power off your PC on command
+🖥️ Open and close any desktop application
+🔎 Run Google searches in your default browser
+💬 Free-form conversation via ChatGPT / Gemini (bring your own API keys)
+🎙️ Offline speech recognition (Vosk) — EN / RU / UK
+🎨 Clean, easy-to-use UI
+🛠️ Stack
+Category	Technologies
+Python	vosk, pyaudio, tkinter, psutil
+Node.js	openai, @google/genai, fs, child_process, path
+System	mpg123, xdg-utils, xdotool (Ubuntu)
 
+📁 Project structure
+jarvis/
+├── windows/          # Windows-specific build/launch files
+├── apps.json          # scanned/known desktop applications
+├── apps_scanner.js     # detects installed apps for launch/close
+├── chatgpt.js           # ChatGPT / Gemini API integration
+├── config.json           # API keys & settings
+├── main.js                # Electron/Node entry point
+├── menu.py                 # main launcher & UI (Linux)
+└── speech.py                # voice recognition (Vosk)
+🚀 Installation
 
-Jarvis' functions:
-- Jarvis' poweroff
-- open any desktop application on your pc. he can close it all as well.
-- find any search request in Google within your default browser 
-- you can feel free to talk with Jarvis about whatever you want (don't ask him about actual data, because it updates less on API requests) just set your api keys right in launcher
-- really good ui
+Prerequisites: Node.js (any recent version), Python 3.12.3
 
+bash
+git clone https://github.com/unwinned/jarvis.git
+cd jarvis
 
-so, let's start from installation:
+# Python virtual environment
+python3 -m venv venv
+source venv/bin/activate
+pip install vosk pyaudio psutil
 
-first of all you need Node.js (don't care about the version), and Python 3.12.3 (Jarvis' was made using this one, and I can guarantee it'll work for sure) once you've downloaded that, you can easily proceed to virtual environment setup for Python: python3 -m venv venv then download all the needed libraries - Javascript: fs, openai, child_process, path, @google/genai. and here's for python: vosk, pyaudio, json, tkinter, subprocess, os, signal, psutil
-for Ubuntu (I use 24.04): mpg123 xdg-utils xdotool
+# Node.js dependencies
+npm install openai @google/genai
 
+Ubuntu system packages:
 
-important - install voice models for vosk library from their official site. Install UK, RU, EN libraries (the smallest ones, it'll be enough)
+bash
+sudo apt install mpg123 xdg-utils xdotool
 
-once you've installed all the libraries, and venv is workable - launch Jarvis using "source venv/bin/activate" and "python3 menu.py"
+Voice models: download the small EN / RU / UK models from the official Vosk site — that's enough for speech recognition to work.
 
-enjoy!
+⚙️ Configuration
+
+Set your API keys (OpenAI / Gemini) in config.json before launching.
+
+▶️ Usage
+
+Linux:
+
+bash
+source venv/bin/activate
+python3 menu.py
+
+Windows (v3.5+): launch chatgpt.js directly — menu.py isn't fully supported on Windows yet.
+
+🗺️ Roadmap
+ Full Windows support
+ Updated UI (v3.4)
+ Faster response times
+⚠️ Disclaimer
+
+For personal, educational use. Voice assistant responses depend on the underlying AI API and may not reflect real-time data.
+
+📬 Contact
+X (Twitter): @0xunwinned
