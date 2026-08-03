@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="https://t.me/just_unwinned">Telegram</a> ·
-  <a href="https://x.com/unwinned">X (Twitter)</a>
+  <a href="https://x.com/0xunwinned">X (Twitter)</a>
 </p>
 
 ---
